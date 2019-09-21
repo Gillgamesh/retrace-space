@@ -79,6 +79,8 @@ class HomeContent extends Component {
                         text="Reaction Breakdown"
                     />
                 </Chart>
+                <h1>Most Emotional Phrase:</h1>
+                <div>{dataList[0]["message1" || null]}</div>
             </Paper>
         )
       // return (
