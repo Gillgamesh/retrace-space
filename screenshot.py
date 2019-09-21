@@ -7,19 +7,15 @@ from PIL import Image
 import time
 from google.cloud import vision
 from google.cloud.vision import types
+# Imports the Google Cloud client library
+from google.cloud import language
+from google.cloud.language import enums
+from google.cloud.language import types
+import nltk
+nltk.download('punkt')
+from nltk import tokenize
+import re
 
-# take a screenshot of the screen and store it in memory, then
-# convert the PIL/Pillow image to an OpenCV compatible NumPy array
-# and finally write the image to disk
-image = pyautogui.screenshot()
-image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
-cv2.imwrite("in_memory_to_disk.png", image)
-# this time take a screenshot directly to disk
-pyautogui.screenshot("straight_to_disk.png")	
-# we can then load our screenshot from disk in OpenCV format
-#image = cv2.imread("straight_to_disk.png")
-#cv2.imshow("Screenshot", imutils.resize(image, width=600))
-#cv2.waitKey(0)
 client = vision.ImageAnnotatorClient()
 
 def detect_text(image):
@@ -33,9 +29,34 @@ def detect_text(image):
     texts = response.text_annotations
     print('Texts:')
     retstr = '\n"{}"'.format(texts[0].description.encode('ascii', 'ignore'))
-    print retstr
+    return retstr
 
-
-
-#file = cv2.imencode('.png', img).tostring
-detect_text(image)
+def screendata():
+    # take a screenshot of the screen and store it in memory, then
+    # convert the PIL/Pillow image to an OpenCV compatible NumPy array
+    # and finally write the image to disk
+    image = pyautogui.screenshot()
+    image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
+    cv2.imwrite("in_memory_to_disk.png", image)
+    # this time take a screenshot directly to disk
+    pyautogui.screenshot("straight_to_disk.png")	
+    client = vision.ImageAnnotatorClient()
+    finalstr = detect_text(image)
+    # Instantiates a client
+    client = language.LanguageServiceClient()
+    a = tokenize.sent_tokenize(re.sub('\n', " .", finalstr))
+    magnitude = []
+    scores = []
+    magnitude2 = []
+    for final in a:
+        #print(final)
+        document = types.Document(
+            content= final,
+            type=enums.Document.Type.PLAIN_TEXT)
+        # Detects the sentiment of the text
+        sentiment = client.analyze_sentiment(document=document).document_sentiment
+        magnitude.append(abs(sentiment.score) * sentiment.magnitude)
+        scores.append(sentiment.score)
+        sents = sorted(zip(magnitude, scores, a), key=lambda x: x[0], reverse = True)[:3]
+        return sents[0][0]
+    

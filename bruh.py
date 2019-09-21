@@ -6,41 +6,55 @@ from google.cloud import vision
 from google.cloud.vision import types
 cv2.namedWindow("preview")
 vc = cv2.VideoCapture(0)
-
+from screenshot import screendata
 
 def detect_text(content):
-
     image = types.Image(content=content)
     response = client.face_detection(image=image)
     faces = response.face_annotations
 
     likelihood_name = ('UNKNOWN', 'VERY_UNLIKELY', 'UNLIKELY', 'POSSIBLE',
                        'LIKELY', 'VERY_LIKELY')
-    print('Faces:')
+    emotion = ""
     for face in faces:
-        print(face)
-        print('anger: {}'.format(likelihood_name[face.anger_likelihood]))
-        print('joy: {}'.format(likelihood_name[face.joy_likelihood]))
-        print('surprise: {}'.format(likelihood_name[face.surprise_likelihood]))
-
-        vertices = (['({},{})'.format(vertex.x, vertex.y)
-                    for vertex in face.bounding_poly.vertices])
-
-        print('face bounds: {}'.format(','.join(vertices)))
-
+        if face.anger_likelihood >= 4:
+            emotion = "anger"
+        elif face.joy_likelihood >= 4:
+            emotion = "joy"
+        elif face.sorrow_likelihood >= 4 :
+            emotion = "sorrow"
+        elif face.surprise_likelihood >= 4:
+            emotion = "surprise"
+    return emotion
 
 if vc.isOpened():
     rval, frame = vc.read()
 else:
     rval = False
 # Instantiates a client
+
 client = vision.ImageAnnotatorClient()
-
-
 if rval:
     cv2.imshow("preview", frame)
     rval, frame = vc.read()
     file = cv2.imencode('.jpg', frame)[1].tostring()
-    print(detect_text(file))
+    expression = detect_text(file)
 
+if (expression != ""):
+    textinfo = screendata()
+    json_string = """
+    {
+    "expression": {
+        "emotion":""" + expression +  """,
+        "magnitude1":""" + textinfo[0][0] + """,
+        "message1":""" + textinfo[0][2] + """,
+        "magnitude2":""" + textinfo[1][0] + """,
+        "message2":""" + textinfo[1][2] + """,
+        "magnitude2":""" + textinfo[2][0] + """,
+        "message2":""" + textinfo[2][2] + """,
+        }
+        """
+    data = json.loads(json_string)
+    print data
+    
 cv2.destroyWindow("preview")
