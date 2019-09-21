@@ -3,6 +3,8 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import Paper from '@material-ui/core/Paper';
 
+import {default as data} from '../../data.json'
+
 import { Link } from 'react-router-dom';
 
 import { withStyles } from '@material-ui/core/styles';
@@ -10,7 +12,8 @@ import { withStyles } from '@material-ui/core/styles';
 import {
     Chart,
     PieSeries,
-    Title
+    Title,
+    Legend
 } from '@devexpress/dx-react-chart-material-ui';
 
 import Fab from '@material-ui/core/Fab';
@@ -42,28 +45,38 @@ class HomeContent extends Component {
 
     const { classes } = this.props;
 
-    var data = [
-        {expression: 'Sorrow', val: 0.5},
-        {expression: 'Joy', val: 0.5},
-        {expression: 'Anger', val: 0.5},
-        {expression: 'Surprise', val: 0.5},
-    ]
+    // var data = [
+    //     {expression: 'Sorrow', val: 0.5},
+    //     {expression: 'Joy', val: 0.5},
+    //     {expression: 'Anger', val: 0.5},
+    //     {expression: 'Surprise', val: 0.5},
+    // ]
     // Properties
+    console.log(data);
     const { isSignedIn, title } = this.props;
-
+      var dataList = data.map(x => x["expression"]);
+      var frequency = {"Sorrow": 0, "Joy": 0, "Anger": 0, "Surprise": 0};
+      dataList.forEach(row => {
+          frequency[row['emotion']] += 1;
+      });
+      console.log("frequency");
+      var frequencyList = (Object.keys(frequency)).map(
+          e => {return {'emotion': e, 'val': frequency[e]}
+          });
     if (isSignedIn) {
         return (
             <Paper>
                 <Chart
-                    data={data}
+                    data={frequencyList}
                 >
                     <PieSeries
-                        valueField="val"
-                        argumentField="expression"
+                        valueField={"val"}
+                        argumentField="emotion"
                         innerRadius={0.6}
                     />
+                    <Legend/>
                     <Title
-                        text="Bruh"
+                        text="Reaction Breakdown"
                     />
                 </Chart>
             </Paper>
@@ -81,13 +94,7 @@ class HomeContent extends Component {
       <EmptyState
         icon={<CodeIcon className={classes.emptyStateIcon} color="action" />}
         title={title}
-        description="The three musketeers, all in one pack in the form of a boilerplate app"
-        button={
-          <Fab className={classes.button} color="secondary" href="https://github.com/Phoqe/react-material-ui-firebase" rel="noopener noreferrer" target="_blank" variant="extended">
-            <GitHubCircleIcon className={classes.buttonIcon} />
-            GitHub
-          </Fab>
-        }
+        description="You must be signed in to view your statistics!"
       />
     );
   }

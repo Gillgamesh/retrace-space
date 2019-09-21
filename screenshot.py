@@ -11,52 +11,45 @@ from google.cloud.vision import types
 from google.cloud import language
 from google.cloud.language import enums
 from google.cloud.language import types
+from nltk import tokenize
 import nltk
 nltk.download('punkt')
-from nltk import tokenize
 import re
 
 client = vision.ImageAnnotatorClient()
 
+
 def detect_text(image):
-
-    with io.open("in_memory_to_disk.png", 'rb') as image_file:
-        content = image_file.read()
-
-    image = vision.types.Image(content=content)
-
+    buf = io.BytesIO()
+    image.save(buf, "JPEG")
+    image = vision.types.Image(content=buf.getvalue())
     response = client.text_detection(image=image)
     texts = response.text_annotations
-    print('Texts:')
     retstr = '\n"{}"'.format(texts[0].description.encode('ascii', 'ignore'))
     return retstr
 
+
 def screendata():
-    # take a screenshot of the screen and store it in memory, then
-    # convert the PIL/Pillow image to an OpenCV compatible NumPy array
-    # and finally write the image to disk
     image = pyautogui.screenshot()
-    image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
-    cv2.imwrite("in_memory_to_disk.png", image)
-    # this time take a screenshot directly to disk
-    pyautogui.screenshot("straight_to_disk.png")	
     client = vision.ImageAnnotatorClient()
     finalstr = detect_text(image)
     # Instantiates a client
     client = language.LanguageServiceClient()
     a = tokenize.sent_tokenize(re.sub('\n', " .", finalstr))
+    filter(
+        lambda x: re.match('(([a-zA-Z1-9])+(\s)*)*', x),
+        a
+    )
     magnitude = []
     scores = []
-    magnitude2 = []
     for final in a:
-        #print(final)
         document = types.Document(
-            content= final,
+            content=final,
             type=enums.Document.Type.PLAIN_TEXT)
         # Detects the sentiment of the text
         sentiment = client.analyze_sentiment(document=document).document_sentiment
-        magnitude.append(abs(sentiment.score) * sentiment.magnitude)
+        magnitude.append(abs(sentiment.score))
         scores.append(sentiment.score)
-        sents = sorted(zip(magnitude, scores, a), key=lambda x: x[0], reverse = True)[:3]
-        return sents[0][0]
-    
+    sents = sorted(zip(magnitude, scores, a), key=lambda x: x[0], reverse=True)[:3]
+    return sents
+
