@@ -37,13 +37,10 @@ else:
 client = vision.ImageAnnotatorClient()
 
 
-while rval:
+if rval:
     cv2.imshow("preview", frame)
     rval, frame = vc.read()
     file = cv2.imencode('.jpg', frame)[1].tostring()
-    sleeptime = 10
-    if sleeptime > 0:
-        time.sleep(sleeptime)
     print(detect_text(file))
 
 cv2.destroyWindow("preview")
