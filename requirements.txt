@@ -27,6 +27,6 @@ python3-xlib==0.15
 PyTweening==1.0.3
 pytz==2019.2
 requests==2.22.0
-rsa==4.0
+rsa==4.1
 six==1.12.0
 urllib3==1.25.5
