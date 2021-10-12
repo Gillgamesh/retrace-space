@@ -12,7 +12,7 @@ imutils==0.5.3
 MouseInfo==0.0.4
 nltk==3.4.5
 numpy==1.17.2
-opencv-python==4.1.1.26
+opencv-python==4.2.0.32
 Pillow==6.1.0
 protobuf==3.9.1
 pyasn1==0.4.7
